@@ -4,7 +4,7 @@ import { Button, Space, Image, Input, Alert, Typography } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import { AppUser, UserSource } from '../types'
-import { validateName, getInputDir } from '../utils/nameValidation'
+import { validateName, validateNamePair, getInputDir } from '../utils/nameValidation'
 
 interface LocationState {
   user: AppUser
@@ -63,8 +63,9 @@ export default function ProfileDetail() {
   const birthYear = new Date(user.dob).getFullYear()
 
   const firstNameError = validateName(firstName)
-  const lastNameError = validateName(lastName)
-  const hasErrors = Boolean(firstNameError || lastNameError)
+  const lastNameError  = validateName(lastName)
+  const pairError      = validateNamePair(firstName, lastName)
+  const hasErrors      = Boolean(firstNameError || lastNameError || pairError)
 
   const withBusy = async (fn: () => Promise<void>) => {
     setBusy(true)
@@ -193,37 +194,42 @@ export default function ProfileDetail() {
             שם
           </div>
           <div dir="ltr" style={{ flex: 1, textAlign: 'left' }}>
-            <Space align="start">
-              <div>
-                <Input
-                  dir={getInputDir(firstName)}
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First name"
-                  style={{ width: 150 }}
-                  status={firstNameError ? 'error' : undefined}
-                />
-                {firstNameError && (
-                  <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 2 }}>
-                    {firstNameError}
-                  </div>
-                )}
-              </div>
-              <div>
-                <Input
-                  dir={getInputDir(lastName)}
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last name"
-                  style={{ width: 150 }}
-                  status={lastNameError ? 'error' : undefined}
-                />
-                {lastNameError && (
-                  <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 2 }}>
-                    {lastNameError}
-                  </div>
-                )}
-              </div>
+            <Space direction="vertical" size={4}>
+              <Space align="start">
+                <div>
+                  <Input
+                    dir={getInputDir(firstName)}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    style={{ width: 150 }}
+                    status={firstNameError || pairError ? 'error' : undefined}
+                  />
+                  {firstNameError && (
+                    <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 2 }}>
+                      {firstNameError}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Input
+                    dir={getInputDir(lastName)}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    style={{ width: 150 }}
+                    status={lastNameError || pairError ? 'error' : undefined}
+                  />
+                  {lastNameError && (
+                    <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 2 }}>
+                      {lastNameError}
+                    </div>
+                  )}
+                </div>
+              </Space>
+              {pairError && (
+                <div style={{ color: '#ff4d4f', fontSize: 12 }}>{pairError}</div>
+              )}
             </Space>
           </div>
         </div>

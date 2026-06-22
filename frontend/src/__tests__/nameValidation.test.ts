@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validateName, getInputDir } from '../utils/nameValidation'
+import { validateName, validateNamePair, getInputDir } from '../utils/nameValidation'
 
 describe('validateName', () => {
   it('returns null for empty string', () => {
@@ -44,6 +44,36 @@ describe('validateName', () => {
 
   it('rejects mixing English prefix with Hebrew', () => {
     expect(validateName('A דוד')).toMatch(/Hebrew or English/i)
+  })
+})
+
+describe('validateNamePair', () => {
+  it('returns null when both are English', () => {
+    expect(validateNamePair('John', 'Smith')).toBeNull()
+  })
+
+  it('returns null when both are Hebrew', () => {
+    expect(validateNamePair('דוד', 'לוי')).toBeNull()
+  })
+
+  it('returns null when first name is empty', () => {
+    expect(validateNamePair('', 'Smith')).toBeNull()
+  })
+
+  it('returns null when last name is empty', () => {
+    expect(validateNamePair('John', '')).toBeNull()
+  })
+
+  it('returns null when both are empty', () => {
+    expect(validateNamePair('', '')).toBeNull()
+  })
+
+  it('returns error when first is English and last is Hebrew', () => {
+    expect(validateNamePair('John', 'לוי')).toMatch(/same language/i)
+  })
+
+  it('returns error when first is Hebrew and last is English', () => {
+    expect(validateNamePair('דוד', 'Smith')).toMatch(/same language/i)
   })
 })
 

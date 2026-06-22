@@ -13,3 +13,20 @@ export function validateName(value: string): string | null {
 export function getInputDir(value: string): 'ltr' | 'rtl' {
   return HEBREW.test(value) ? 'rtl' : 'ltr'
 }
+
+function script(value: string): 'hebrew' | 'latin' | 'none' {
+  const t = value.trim()
+  if (!t) return 'none'
+  if (HEBREW.test(t)) return 'hebrew'
+  if (LATIN.test(t)) return 'latin'
+  return 'none'
+}
+
+export function validateNamePair(first: string, last: string): string | null {
+  const fs = script(first)
+  const ls = script(last)
+  if (fs !== 'none' && ls !== 'none' && fs !== ls) {
+    return 'First and last name must be in the same language'
+  }
+  return null
+}
