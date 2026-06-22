@@ -7,6 +7,7 @@ import UserRow from '../components/UserRow'
 import SkeletonList from '../components/SkeletonList'
 import FilterBar, { FilterState, DEFAULT_FILTER } from '../components/FilterBar'
 import { useDebounce } from '../hooks/useDebounce'
+import { filterUsers } from '../utils/filterUsers'
 
 export default function RandomList() {
   const navigate = useNavigate()
@@ -20,15 +21,7 @@ export default function RandomList() {
 
   const countries = [...new Set(randomUsers.map((u) => u.country))].sort()
 
-  const filtered = randomUsers.filter((u) => {
-    const q = filter.text.toLowerCase()
-    return (
-      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) &&
-      (filter.gender === 'all' || u.gender === filter.gender) &&
-      u.age >= filter.ageRange[0] && u.age <= filter.ageRange[1] &&
-      (filter.country.length === 0 || filter.country.includes(u.country))
-    )
-  })
+  const filtered = filterUsers(randomUsers, filter)
 
   return (
     <Flex vertical style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px' }}>
