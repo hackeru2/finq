@@ -26,12 +26,11 @@ const female: AppUser = {
 const male: AppUser = { ...female, id: '2', gender: 'male', firstName: 'Bob', lastName: 'Jones' }
 
 describe('UserRow', () => {
-  it('renders name without title prefix, country, email and phone', () => {
+  it('renders title + name, country flag, email and phone', () => {
     const { container } = render(<UserRow user={female} onClick={vi.fn()} />)
 
-    expect(screen.getByText('Alice Smith')).toBeInTheDocument()
-    expect(screen.queryByText('Ms Alice Smith')).not.toBeInTheDocument()
-    expect(screen.getByText('Canada')).toBeInTheDocument()
+    expect(container).toHaveTextContent('Ms Alice Smith')
+    expect(container).toHaveTextContent('🇨🇦')
     expect(container).toHaveTextContent('alice@example.com')
     expect(container).toHaveTextContent('416-555-0101')
   })
@@ -57,8 +56,8 @@ describe('UserRow', () => {
 
   it('calls onClick when the row is clicked', async () => {
     const onClick = vi.fn()
-    render(<UserRow user={female} onClick={onClick} />)
-    await userEvent.click(screen.getByText('Alice Smith'))
+    const { container } = render(<UserRow user={female} onClick={onClick} />)
+    await userEvent.click(container.querySelector('.ant-list-item')!)
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 })
