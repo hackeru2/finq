@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start services
+        run: docker compose up -d --build
+
+      - name: Wait for MySQL to be healthy
+        run: |
+          echo "Waiting for MySQL..."
+          for i in $(seq 1 30); do
+            docker compose exec -T db mysqladmin ping -h localhost -uroot -proot --silent && break
+            sleep 3
+          done
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:5000/api/health && break
+            sleep 3
+          done
+
+      - name: Run backend tests
+        run: docker compose exec -T backend sh -c "cd /app && npm test"
+
+      - name: Run frontend tests
+        run: docker compose exec -T frontend sh -c "cd /app && npx vitest run --reporter=verbose"
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
