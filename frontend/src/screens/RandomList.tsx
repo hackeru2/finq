@@ -26,7 +26,7 @@ export default function RandomList() {
       `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) &&
       (filter.gender === 'all' || u.gender === filter.gender) &&
       u.age >= filter.ageRange[0] && u.age <= filter.ageRange[1] &&
-      (filter.country === '' || u.country === filter.country)
+      (filter.country.length === 0 || filter.country.includes(u.country))
     )
   })
 

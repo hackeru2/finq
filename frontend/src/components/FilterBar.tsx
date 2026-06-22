@@ -1,19 +1,20 @@
 import { useState } from 'react'
 import { Button, Modal, Radio, Slider, Select, Badge, Space, Typography, Flex, Input } from 'antd'
-import { FilterOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons'
+import { FilterOutlined, SearchOutlined, ClearOutlined, ManOutlined, WomanOutlined, TeamOutlined } from '@ant-design/icons'
+import { countryFlag } from '../utils/countryFlag'
 
 export interface FilterState {
   text: string
   gender: 'all' | 'male' | 'female'
   ageRange: [number, number]
-  country: string
+  country: string[]
 }
 
 export const DEFAULT_FILTER: FilterState = {
   text: '',
   gender: 'all',
   ageRange: [0, 100],
-  country: '',
+  country: [],
 }
 
 /** True when any modal filter (gender / age / country) differs from its default. */
@@ -22,7 +23,7 @@ export function isFilterActive(f: FilterState): boolean {
     f.gender !== 'all' ||
     f.ageRange[0] !== 0 ||
     f.ageRange[1] !== 100 ||
-    f.country !== ''
+    f.country.length > 0
   )
 }
 
@@ -31,7 +32,7 @@ export function activeFilterCount(f: FilterState): number {
   let n = 0
   if (f.gender !== 'all') n++
   if (f.ageRange[0] !== 0 || f.ageRange[1] !== 100) n++
-  if (f.country !== '') n++
+  if (f.country.length > 0) n++
   return n
 }
 
@@ -68,7 +69,6 @@ export default function FilterBar({ value, onChange, countries }: Props) {
           style={{ flex: 1 }}
         />
 
-        {/* Badge shines (turns red) when modal filters are active */}
         <Badge count={count} size="small">
           <Button
             icon={<FilterOutlined />}
@@ -93,6 +93,8 @@ export default function FilterBar({ value, onChange, countries }: Props) {
         ]}
       >
         <Flex vertical gap={28} style={{ padding: '12px 0' }}>
+
+          {/* Gender — icon buttons; colours drop when selected (solid fills to blue) */}
           <Flex vertical gap={10}>
             <Typography.Text strong>Gender</Typography.Text>
             <Radio.Group
@@ -101,16 +103,20 @@ export default function FilterBar({ value, onChange, countries }: Props) {
               optionType="button"
               buttonStyle="solid"
             >
-              <Radio.Button value="all">All</Radio.Button>
-              <Radio.Button value="male">Male</Radio.Button>
-              <Radio.Button value="female">Female</Radio.Button>
+              <Radio.Button value="all">
+                <Space size={4}><TeamOutlined />All</Space>
+              </Radio.Button>
+              <Radio.Button value="male">
+                <Space size={4}><ManOutlined />Male</Space>
+              </Radio.Button>
+              <Radio.Button value="female">
+                <Space size={4}><WomanOutlined />Female</Space>
+              </Radio.Button>
             </Radio.Group>
           </Flex>
 
           <Flex vertical gap={10}>
-            <Typography.Text strong>
-              Age: {draft.ageRange[0]}–{draft.ageRange[1]}
-            </Typography.Text>
+            <Typography.Text strong>Age: {draft.ageRange[0]}–{draft.ageRange[1]}</Typography.Text>
             <Slider
               range
               min={0}
@@ -120,15 +126,20 @@ export default function FilterBar({ value, onChange, countries }: Props) {
             />
           </Flex>
 
+          {/* Country — multi-select with flag emoji prefix on each option */}
           <Flex vertical gap={10}>
             <Typography.Text strong>Country</Typography.Text>
             <Select
+              mode="multiple"
               allowClear
               showSearch
               placeholder="Any country"
-              value={draft.country || undefined}
-              onChange={(v) => patch({ country: v ?? '' })}
-              options={[...countries].sort().map((c) => ({ label: c, value: c }))}
+              value={draft.country}
+              onChange={(v: string[]) => patch({ country: v ?? [] })}
+              options={[...countries].sort().map((c) => ({
+                label: `${countryFlag(c)}  ${c}`,
+                value: c,
+              }))}
               style={{ width: '100%' }}
             />
           </Flex>

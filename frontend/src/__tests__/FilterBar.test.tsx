@@ -60,6 +60,7 @@ describe('FilterBar — modal contents', () => {
     const onChange = vi.fn()
     renderBar(defaults, onChange)
     await openModal()
+    // Radio.Button renders as a label — click the label text
     await userEvent.click(screen.getByText('Male'))
     await userEvent.click(screen.getByRole('button', { name: /apply/i }))
     expect(onChange).toHaveBeenCalledWith({ ...defaults, gender: 'male' })

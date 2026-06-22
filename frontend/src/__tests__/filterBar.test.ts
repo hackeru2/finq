@@ -30,11 +30,15 @@ describe('isFilterActive', () => {
   })
 
   it('returns true when a country is selected', () => {
-    expect(isFilterActive({ ...def, country: 'Germany' })).toBe(true)
+    expect(isFilterActive({ ...def, country: ['Germany'] })).toBe(true)
+  })
+
+  it('returns true when multiple countries are selected', () => {
+    expect(isFilterActive({ ...def, country: ['Germany', 'France'] })).toBe(true)
   })
 
   it('returns true when all three modal filters are active', () => {
-    expect(isFilterActive({ ...def, gender: 'female', ageRange: [25, 40], country: 'France' })).toBe(true)
+    expect(isFilterActive({ ...def, gender: 'female', ageRange: [25, 40], country: ['France'] })).toBe(true)
   })
 })
 
@@ -57,12 +61,13 @@ describe('activeFilterCount', () => {
     expect(activeFilterCount({ ...def, ageRange: [20, 50] })).toBe(1)
   })
 
-  it('counts country as 1', () => {
-    expect(activeFilterCount({ ...def, country: 'Spain' })).toBe(1)
+  it('counts country as 1 whether one or many are selected', () => {
+    expect(activeFilterCount({ ...def, country: ['Spain'] })).toBe(1)
+    expect(activeFilterCount({ ...def, country: ['Spain', 'France'] })).toBe(1)
   })
 
   it('returns 3 when all three modal filters are active', () => {
-    const f: FilterState = { text: 'x', gender: 'female', ageRange: [18, 40], country: 'France' }
+    const f: FilterState = { text: 'x', gender: 'female', ageRange: [18, 40], country: ['France', 'Germany'] }
     expect(activeFilterCount(f)).toBe(3)
   })
 })
