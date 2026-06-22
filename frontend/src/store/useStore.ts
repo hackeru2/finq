@@ -70,10 +70,7 @@ export const useStore = create<State>((set, get) => ({
 
   updateSaved: async (id, firstName, lastName) => {
     await api.updateUser(id, firstName, lastName)
-    set((s) => ({
-      savedUsers: s.savedUsers.map((u) =>
-        u.id === id ? { ...u, firstName, lastName } : u
-      ),
-    }))
+    // Re-fetch from server so originalFirstName/originalLastName reflect the DB truth
+    await get().fetchSaved()
   },
 }))
