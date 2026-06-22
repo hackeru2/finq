@@ -16,11 +16,11 @@ The text filter runs on every render of the list. Firing it on every keypress me
 
 ---
 
-## Decision 3: MySQL 8 over SQLite for the persistence layer
+## Decision 3: MySQL 8 + Prisma ORM for the persistence layer
 
-I chose MySQL running in Docker over SQLite because MySQL demonstrates the patterns that actually matter in a production Node.js service: a connection pool (`mysql2/promise` `createPool`), prepared statements that prevent SQL injection by default, and row-level locking that handles concurrent writes without contention. SQLite would have worked, but it uses a table-level write lock — two simultaneous saves from different browser tabs would queue. I also included phpMyAdmin (port 8080) as a zero-setup DB admin panel. In development it lets you inspect rows instantly without a terminal. In production it doubles as an emergency tool — a webmaster can fix a malformed record directly in minutes rather than waiting for a developer hotfix deploy (access should be IP-restricted in prod).
+I chose MySQL 8 in Docker over SQLite, accessed through Prisma ORM rather than raw `mysql2` queries. MySQL gives row-level locking (two simultaneous saves from different tabs don't queue), prepared statements that block SQL injection by default, and phpMyAdmin (port 8080) as a zero-setup admin panel. Prisma adds schema-first TypeScript types generated from `schema.prisma`, a clean OOP `UserRepository` class (`findAll`, `create`, `update`, `delete`) instead of SQL strings scattered across route handlers, and built-in `prisma studio` for dev debugging.
 
-**Tradeoff:** MySQL adds ~25 seconds on first boot while the container initialises. I handled this with a `healthcheck` + `depends_on: condition: service_healthy` in docker-compose so the backend waits for MySQL to be ready. SQLite would have started instantly with zero config. In production I'd also move the inline `initDb()` schema to versioned migrations (Knex or Flyway) so schema changes are reversible and auditable.
+**Tradeoff:** MySQL adds ~25 s on first boot; handled with `healthcheck` + `depends_on: service_healthy` so the backend waits. Prisma adds ~50 ms to cold queries vs raw `mysql2`, but at this scale (10–100 rows) the delta is unmeasurable. SQLite would have been zero-config; raw SQL would have been faster to write. In production I'd add versioned migrations (Prisma Migrate) and benchmark hot-path queries against raw SQL if latency became a concern.
 
 ---
 
@@ -54,18 +54,3 @@ The name `<Input>` fields get a dynamic `dir` from `getInputDir()`: if the user 
 Added gender, age range (slider), and country (multi-select) filters behind a modal button. Filters stay hidden until needed — a persistent bar wastes vertical space. When active, the button turns blue with a badge count. Text search stays inline since it's the most frequent action. Draft-then-apply prevents re-filtering on every slider drag.
 
 **With more time:** Connect a vision AI agent (Claude API, server-side) to analyse each profile photo and return an age/gender match score — shown as a ✓ or ⚠ badge on the avatar. Real identity products can't trust user-supplied data blindly; this turns a static photo into a data-quality signal.
-
----
-
-## Decision 4: Prisma ORM over raw SQL for type safety and migration management
-
-I migrated from raw `mysql2/promise` queries to Prisma because:
-- **Schema-first types** — Prisma generates TypeScript types from `schema.prisma` automatically, eliminating the need for manual type definitions and preventing schema-code mismatches
-- **Zero SQL strings** — All queries are parameterized by default, killing SQL injection vectors
-- **Repository pattern** — `UserRepository` provides a clean OOP interface (`findAll()`, `findById()`, etc.) instead of query strings scattered across route handlers
-- **Automatic migrations** — Schema changes create reversible migration files instead of manual `ALTER TABLE` scripts
-- **Prisma Studio** — Built-in visual database browser at `npx prisma studio` for dev debugging
-
-**Tradeoff:** Prisma adds ~50ms to cold queries (vs direct `mysql2`) due to type marshalling. However, Prisma's connection pooling and prepared statements eliminate the micro-optimisations you'd gain from raw SQL anyway. For this app's scale (10–100 saved users), the performance delta is unmeasurable. In production with millions of rows, I'd benchmark and consider Prisma Accelerate (global caching layer) or drop to raw SQL for specific slow queries while keeping the repository pattern.
-
-**Migration cost:** Moved from `db.ts` exporting a pool to exporting a singleton `PrismaClient`. Updated all route handlers to use `UserRepository` methods instead of inline queries. Updated tests to mock Prisma instead of `mysql2`. All changes are transparent to the frontend.

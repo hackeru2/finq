@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Button, Space, Image, Input, Alert, Typography, Flex, Tooltip } from 'antd'
+import { Button, Space, Image, Input, Alert, Typography, Flex, Tooltip, message } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import { AppUser, UserSource } from '../types'
@@ -87,7 +87,11 @@ export default function ProfileDetail() {
     updateRandom(user.id, firstName, lastName)
     setFeedback({ type: 'success', msg: 'Saved!' })
   })
-  const handleDelete = () => withBusy(async () => { await deleteUser(user.id); navigate('/history', { replace: true }) })
+  const handleDelete = () => withBusy(async () => {
+    await deleteUser(user.id)
+    message.success(`${user.firstName} ${user.lastName} deleted`)
+    navigate('/history', { replace: true })
+  })
   const handleUpdate = () => withBusy(async () => {
     if (source === 'saved') await updateSaved(user.id, firstName, lastName)
     else updateRandom(user.id, firstName, lastName)
