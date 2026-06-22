@@ -1,6 +1,24 @@
 # DECISIONS.md
 
-## 0. Ant Design over plain CSS or another component library
+## 0. Icons over text labels wherever meaning is universal
+
+Cognitive science research consistently shows the human brain processes a recognised icon in ~150 ms — roughly twice as fast as reading the equivalent word. This is because icon recognition is handled by the visual cortex (pre-attentive processing) while reading activates the language centres and requires sequential decoding. In scanning a list of ten rows, a user spends cognitive budget on names and details; every piece of metadata that can be communicated visually instead of verbally frees up that budget.
+
+This app applies the principle in three places:
+
+| Data | What was replaced | What is shown now | Why it is universally understood |
+|---|---|---|---|
+| Gender | "male" / "female" text tag | ♂ `ManOutlined` (blue) / ♀ `WomanOutlined` (pink) | Mars/Venus symbols with culturally consistent colour coding are recognised globally without reading |
+| Country | Country name text | Flag emoji + hover tooltip | National flags are among the most widely recognised symbols on Earth; the tooltip preserves full accessibility |
+| Contact type | Bare phone/email strings | `PhoneOutlined` / `MailOutlined` before each value | Icons preemptively answer "what type of thing is this?" before the user reads the value |
+
+**Hover-tooltip rule:** Every icon that replaces a text value **must** carry a `<Tooltip title={value}>` so keyboard/screen-reader users and anyone unfamiliar with the symbol can still access the full label. Icon-only without a fallback is an accessibility failure, not a design win.
+
+**When not to use an icon:** Labels for editable fields (שם, מגדר, כתובת…) remain as text because the icon for "street address" or "date of birth" is not universally agreed on. Forcing an icon there would slow comprehension, not speed it up.
+
+---
+
+## 0a. Ant Design over plain CSS or another component library
 
 I chose Ant Design because I know it, it is a proven production-grade library (7+ years, tens of thousands of GitHub stars), it is MIT-licensed (free), and it gives the app a professional finish without any CSS authoring. The alternative — letting the AI write plain CSS — produces an obviously "AI-generated" look: neutral greys, generic card shadows, nothing that reads as a considered choice. That would have hurt the submission more than helped it.
 
