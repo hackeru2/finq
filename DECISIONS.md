@@ -48,15 +48,34 @@ That is approximately 80% of what Zustand gives you, written from scratch, with 
 
 ---
 
-## 2. MySQL over SQLite or JSON file
+## 2. MySQL 8 + phpMyAdmin
 
-I chose MySQL 8 running in Docker because the spec said "be ready to defend your persistence choice" and a real relational DB shows the design more clearly.
+### Why MySQL over SQLite or a JSON file
 
-**Why not JSON file:** Concurrent writes (even two tabs) can corrupt it. No query capability. Fine for a prototype but wrong for a multi-user service.
+**JSON file** — concurrent writes (even two browser tabs) can corrupt the file. No query capability, no transactions, no referential integrity. Fine for a config store; wrong for user data that is read, written, and updated concurrently.
 
-**Why not SQLite:** SQLite would have been fine here — single file, zero ops, synchronous API with `better-sqlite3`. I chose MySQL because it is already in the Docker network, phpMyAdmin adds free visibility into the data during development, and it demonstrates the same `mysql2` patterns you'd use in production. The tradeoff is ~30 seconds of MySQL init time on first boot.
+**SQLite** — a legitimate choice: single file, zero operational overhead, synchronous API via `better-sqlite3`. I ruled it out for two reasons. First, MySQL is the database teams reach for in production Node.js stacks — using `mysql2` here demonstrates the exact connection-pool, prepared-statement, and error-handling patterns an interviewer would expect to see in a real service. Second, running MySQL in Docker means the entire data layer is self-contained and identical across every machine, with no dependency on the host's SQLite version or file-system permissions.
 
-**Production note:** I'd add an index on `email` and separate the schema migration into a proper migration tool (e.g., Flyway or Knex migrations).
+**Why MySQL 8 specifically:** Row-level locking (vs. SQLite's table-level lock) handles concurrent saves without contention. The `mysql2` driver is the industry-standard Node.js client — promise-based, uses prepared statements by default (protecting against SQL injection), and supports connection pooling out of the box. MySQL 8 also introduced `DEFAULT_AUTHENTICATION_PLUGIN=caching_sha2_password`, which is more secure than the legacy `mysql_native_password` used in older versions.
+
+**Tradeoff:** MySQL takes ~20–30 seconds to initialise on first boot. The `docker-compose.yml` handles this with a `healthcheck` + `depends_on: condition: service_healthy` so the backend only starts once MySQL is actually ready to accept connections.
+
+**Production note:** I'd add an index on `email` and migrate the inline `initDb()` schema to a proper migration tool (Flyway or Knex migrations) so schema changes are versioned and reversible.
+
+---
+
+### Why phpMyAdmin
+
+phpMyAdmin is a web-based GUI for MySQL that runs as a fourth container in the Docker Compose stack and is accessible at `http://localhost:8080`. It requires no installation beyond a single line in `docker-compose.yml`.
+
+**Why it earns its place:**
+
+- **Zero-friction data inspection during development.** Instead of dropping into a terminal and writing `SELECT * FROM users WHERE ...`, you can browse the `users` table, inspect every column (including `original_first_name` / `original_last_name`), and see the effect of each save/update in real time. This cuts debug cycles significantly.
+- **Schema visibility.** phpMyAdmin renders the full table structure — column types, defaults, nullable flags, indexes — in a single view. This makes it immediately obvious when a migration ran correctly (or didn't).
+- **No credentials to manage.** The `docker-compose.yml` passes `PMA_HOST`, `PMA_USER`, and `PMA_PASSWORD` as environment variables so phpMyAdmin auto-connects. The reviewer or interviewer can open `localhost:8080` with zero configuration and inspect live data instantly.
+- **Demonstrates operational awareness.** Choosing to include a DB admin panel signals that the developer thinks beyond the code — they consider observability and debuggability as first-class concerns, not afterthoughts.
+
+**Why not a heavier alternative (DBeaver, TablePlus, MySQL Workbench):** Those tools require a separate desktop installation and manual connection setup. phpMyAdmin runs in Docker alongside everything else — no setup, no version conflicts, works on any OS.
 
 ---
 
