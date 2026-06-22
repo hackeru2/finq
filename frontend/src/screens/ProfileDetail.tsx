@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button, Space, Image, Input, Alert, Typography, Flex, Tooltip } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, SaveOutlined, DeleteOutlined, EditOutlined, ManOutlined, WomanOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import { AppUser, UserSource } from '../types'
 import { validateName, validateNamePair, getInputDir } from '../utils/nameValidation'
@@ -164,7 +164,13 @@ export default function ProfileDetail() {
             </span>
           </Tooltip>
         </Field>
-        <Field label="מגדר">{user.gender}</Field>
+        <Field label="מגדר">
+          <Tooltip title={user.gender}>
+            {user.gender === 'male'
+              ? <ManOutlined aria-label="male" style={{ color: '#1677ff', fontSize: 20 }} />
+              : <WomanOutlined aria-label="female" style={{ color: '#eb2f96', fontSize: 20 }} />}
+          </Tooltip>
+        </Field>
 
         {/* Name: custom row — needs per-input validation messages and dynamic direction */}
         <Flex
