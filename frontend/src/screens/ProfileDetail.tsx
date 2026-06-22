@@ -126,7 +126,7 @@ export default function ProfileDetail() {
         />
       )}
 
-      {/* Hero image */}
+      {/* Hero photo */}
       <Flex vertical align="center" style={{ marginBottom: 28 }}>
         <Image
           src={user.pictureLarge}
