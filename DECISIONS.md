@@ -54,11 +54,11 @@ Instead of two separate inputs (name / country), I used one `<Input>` that searc
 
 ## BiDi / RTL Approach (Screen 3)
 
-Screen 3 uses `<ConfigProvider direction="rtl">` from Ant Design to flip the Descriptions layout so Hebrew labels render on the right. Inside each row, the content cell carries `direction: ltr` (CSS) so data (email, phone, address numbers) renders left-to-right.
+Screen 3 sets `dir="rtl"` directly on the Ant Design `<Flex>` card wrapper. This reverses flex child order so Hebrew labels (first child) land on the right without any CSS trickery. Each value cell carries a `<div dir="ltr">` wrapper so email addresses, phone numbers, and street numbers always read left-to-right inside the RTL card. A plain `<div>` is used here — not an antd component — because `dir` is a DOM attribute that antd layout components don't forward, and wrapping with an antd component just to hold one attribute adds noise with no benefit.
 
-The name `<Input>` elements explicitly carry `dir="ltr"`. This matters for cursor behaviour: without it, typing a Latin name after a Hebrew character can cause the insertion point to jump. With it, the browser always treats the field as a left-to-right input regardless of the surrounding RTL context.
+The name `<Input>` elements get a dynamic `dir` prop (via `getInputDir()`) rather than a fixed `ltr`: when the user types Hebrew the cursor tracks right-to-left; when typing Latin it tracks left-to-right. This eliminates the insertion-point jump that occurs when RTL context fights LTR input.
 
-Buttons live outside the `ConfigProvider` wrapper and stay in a LTR `<Space>` so their order and alignment are unaffected.
+Buttons and the action bar live in a separate `<Flex>` outside the RTL card and stay in LTR order so their layout is unaffected.
 
 ---
 
