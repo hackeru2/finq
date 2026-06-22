@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { RowDataPacket } from 'mysql2'
 import { pool } from '../db'
 import { AppUser } from '../types'
@@ -26,14 +26,18 @@ function rowToUser(row: RowDataPacket): AppUser {
   }
 }
 
-router.get('/', async (_req: Request, res: Response) => {
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    'SELECT * FROM users ORDER BY created_at DESC'
-  )
-  res.json(rows.map(rowToUser))
+router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT * FROM users ORDER BY created_at DESC'
+    )
+    res.json(rows.map(rowToUser))
+  } catch (err) {
+    next(err)
+  }
 })
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   const user: AppUser = req.body
   try {
     await pool.execute(
@@ -52,36 +56,39 @@ router.post('/', async (req: Request, res: Response) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'User already saved' })
     }
-    throw err
+    next(err)
   }
 })
 
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params
   const { firstName, lastName } = req.body as { firstName: string; lastName: string }
-
-  const [result] = await pool.execute<any>(
-    'UPDATE users SET first_name = ?, last_name = ? WHERE id = ?',
-    [firstName, lastName, id]
-  )
-
-  if (result.affectedRows === 0) {
-    return res.status(404).json({ error: 'User not found' })
+  try {
+    const [result] = await pool.execute<any>(
+      'UPDATE users SET first_name = ?, last_name = ? WHERE id = ?',
+      [firstName, lastName, id]
+    )
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id])
+    res.json(rowToUser(rows[0]))
+  } catch (err) {
+    next(err)
   }
-
-  const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id])
-  res.json(rowToUser(rows[0]))
 })
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params
-  const [result] = await pool.execute<any>('DELETE FROM users WHERE id = ?', [id])
-
-  if (result.affectedRows === 0) {
-    return res.status(404).json({ error: 'User not found' })
+  try {
+    const [result] = await pool.execute<any>('DELETE FROM users WHERE id = ?', [id])
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    res.status(204).send()
+  } catch (err) {
+    next(err)
   }
-
-  res.status(204).send()
 })
 
 export default router

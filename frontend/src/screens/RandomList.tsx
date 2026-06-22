@@ -5,13 +5,15 @@ import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import UserRow from '../components/UserRow'
 import SkeletonList from '../components/SkeletonList'
-import FilterInput from '../components/FilterInput'
+import FilterBar, { FilterState } from '../components/FilterBar'
 import { useDebounce } from '../hooks/useDebounce'
+
+const DEFAULT_FILTER: FilterState = { text: '', gender: 'all', ageRange: [0, 100] }
 
 export default function RandomList() {
   const navigate = useNavigate()
   const { randomUsers, loadingRandom, errorRandom, fetchRandom } = useStore()
-  const [rawFilter, setRawFilter] = useState('')
+  const [rawFilter, setRawFilter] = useState<FilterState>(DEFAULT_FILTER)
   const filter = useDebounce(rawFilter, 200)
 
   useEffect(() => {
@@ -19,10 +21,11 @@ export default function RandomList() {
   }, [])
 
   const filtered = randomUsers.filter((u) => {
-    const q = filter.toLowerCase()
+    const q = filter.text.toLowerCase()
     return (
-      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
-      u.country.toLowerCase().includes(q)
+      (`${u.firstName} ${u.lastName}`.toLowerCase().includes(q) || u.country.toLowerCase().includes(q)) &&
+      (filter.gender === 'all' || u.gender === filter.gender) &&
+      u.age >= filter.ageRange[0] && u.age <= filter.ageRange[1]
     )
   })
 
@@ -33,16 +36,12 @@ export default function RandomList() {
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>Back</Button>
           <Typography.Title level={3} style={{ margin: 0 }}>Random Users</Typography.Title>
         </Space>
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={fetchRandom}
-          loading={loadingRandom}
-        >
+        <Button icon={<ReloadOutlined />} onClick={fetchRandom} loading={loadingRandom}>
           Refresh
         </Button>
       </Space>
 
-      <FilterInput value={rawFilter} onChange={setRawFilter} />
+      <FilterBar value={rawFilter} onChange={setRawFilter} />
 
       {errorRandom && <Alert type="error" message={errorRandom} style={{ marginBottom: 16 }} />}
 
@@ -52,7 +51,7 @@ export default function RandomList() {
         <List
           bordered
           dataSource={filtered}
-          locale={{ emptyText: filter ? 'No users match the filter' : 'No users loaded' }}
+          locale={{ emptyText: rawFilter.text || rawFilter.gender !== 'all' ? 'No users match the filter' : 'No users loaded' }}
           renderItem={(user) => (
             <UserRow
               key={user.id}

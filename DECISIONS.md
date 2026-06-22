@@ -1,5 +1,13 @@
 # DECISIONS.md
 
+## 0. Ant Design over plain CSS or another component library
+
+I chose Ant Design because I know it, it is a proven production-grade library (7+ years, tens of thousands of GitHub stars), it is MIT-licensed (free), and it gives the app a professional finish without any CSS authoring. The alternative — letting the AI write plain CSS — produces an obviously "AI-generated" look: neutral greys, generic card shadows, nothing that reads as a considered choice. That would have hurt the submission more than helped it.
+
+**Tradeoffs:** Ant Design adds ~300 kB to the bundle (tree-shaken at build time, smaller than the raw number suggests). Its CSS-in-JS engine (`@ant-design/cssinjs`) adds a small runtime cost. For a production app I'd evaluate whether the bundle weight is acceptable; for this spec it is the right call.
+
+---
+
 ## 1. Zustand over Redux or Context
 
 I chose Zustand for shared client state (random users list, saved users list, loading/error flags).
@@ -50,6 +58,18 @@ Buttons live outside the `ConfigProvider` wrapper and stay in a LTR `<Space>` so
 - **tsx runtime in Docker** — no separate TypeScript compile step. In production I'd add `tsc --noEmit` in CI and ship compiled JS.
 - **No optimistic delete** — delete waits for the server response. In production I'd remove the row immediately and restore it on error.
 - **No pagination** — 10 random users and small saved lists. Would add cursor-based pagination at >100 rows.
+
+---
+
+## Filter design: gender toggle + age range slider, not just text
+
+Beyond the required name/country text search, I added two additional filters: a gender toggle (All / Male / Female) and an age range slider. All three live in a single `FilterBar` component.
+
+**Why a toggle instead of a checkbox:** A radio group makes the three states (all/male/female) mutually exclusive and immediately visible. A dropdown would hide the options. Checkboxes would suggest multi-select which isn't needed.
+
+**Why a range slider for age:** The API returns users aged 18–90. A slider communicates the distribution space better than two number inputs; it is faster to interact with and visually matches what users expect for a range.
+
+**Title prefix removed:** Mr/Ms/Dr is noisy data — it adds clutter without adding signal when scanning a list. The gender icon (♂/♀ in blue/pink) communicates the same information in one glyph with less space. This was an explicit product decision, not a default.
 
 ---
 
