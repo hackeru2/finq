@@ -2,6 +2,8 @@
 
 React + Node/TypeScript app that fetches random user profiles and lets you persist a subset of them.
 
+**Live demo:** http://46.137.178.174:5173 | **DB admin:** http://46.137.178.174:8080 (user: `root`, password: `root`)
+
 ## Stack
 
 | Layer | Technology |
@@ -21,7 +23,7 @@ No Node, npm, or database install required — everything runs in containers.
 ## Run
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 | Service | URL |
@@ -58,7 +60,7 @@ finq/
 │       ├── api/            fetch wrappers
 │       ├── hooks/          useDebounce
 │       ├── screens/        Home, RandomList, SavedProfiles, ProfileDetail
-│       ├── components/     UserRow, SkeletonList, FilterInput
+│       ├── components/     UserRow, SkeletonList, FilterBar, GenderIcon
 │       └── store/          Zustand store
 ├── DECISIONS.md
 ├── AI_USAGE.md
