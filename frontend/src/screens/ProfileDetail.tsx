@@ -1,15 +1,45 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Button, Space, Image, Descriptions, Input, Alert, ConfigProvider, Typography,
-} from 'antd'
+import { Button, Space, Image, Input, Alert, Typography } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import { AppUser, UserSource } from '../types'
+import { validateName, getInputDir } from '../utils/nameValidation'
 
 interface LocationState {
   user: AppUser
   source: UserSource
+}
+
+/** Single row in the RTL profile card. Label sits on the right (natural in dir=rtl). */
+function Field({
+  label,
+  children,
+  last = false,
+}: {
+  label: string
+  children: React.ReactNode
+  last?: boolean
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+        padding: '14px 20px',
+        borderBottom: last ? 'none' : '1px solid #f0f0f0',
+      }}
+    >
+      <div style={{ minWidth: 140, fontWeight: 600, fontSize: 14, flexShrink: 0, paddingTop: 2 }}>
+        {label}
+      </div>
+      {/* dir=ltr ensures every data value reads left-to-right inside the RTL card */}
+      <div dir="ltr" style={{ flex: 1, fontSize: 14, color: '#595959', textAlign: 'left' }}>
+        {children}
+      </div>
+    </div>
+  )
 }
 
 export default function ProfileDetail() {
@@ -20,9 +50,9 @@ export default function ProfileDetail() {
   const { saveUser, deleteUser, updateRandom, updateSaved } = useStore()
 
   const [firstName, setFirstName] = useState(state?.user.firstName ?? '')
-  const [lastName, setLastName]   = useState(state?.user.lastName ?? '')
-  const [busy, setBusy]           = useState(false)
-  const [feedback, setFeedback]   = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  const [lastName, setLastName] = useState(state?.user.lastName ?? '')
+  const [busy, setBusy] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
 
   if (!state) {
     navigate('/', { replace: true })
@@ -31,6 +61,10 @@ export default function ProfileDetail() {
 
   const { user, source } = state
   const birthYear = new Date(user.dob).getFullYear()
+
+  const firstNameError = validateName(firstName)
+  const lastNameError = validateName(lastName)
+  const hasErrors = Boolean(firstNameError || lastNameError)
 
   const withBusy = async (fn: () => Promise<void>) => {
     setBusy(true)
@@ -68,12 +102,20 @@ export default function ProfileDetail() {
 
   return (
     <div style={{ maxWidth: 620, margin: '0 auto', padding: '24px 16px' }}>
-      {/* Back + actions — always LTR */}
+      {/* Action bar — always LTR */}
       <Space style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between' }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+          Back
+        </Button>
         <Space>
           {source === 'random' && (
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={busy}>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSave}
+              loading={busy}
+              disabled={hasErrors}
+            >
               Save
             </Button>
           )}
@@ -82,7 +124,12 @@ export default function ProfileDetail() {
               Delete
             </Button>
           )}
-          <Button icon={<EditOutlined />} onClick={handleUpdate} loading={busy}>
+          <Button
+            icon={<EditOutlined />}
+            onClick={handleUpdate}
+            loading={busy}
+            disabled={hasErrors}
+          >
             Update
           </Button>
         </Space>
@@ -108,66 +155,88 @@ export default function ProfileDetail() {
           preview={false}
         />
         <Typography.Title level={4} style={{ marginTop: 12, marginBottom: 0 }}>
-          {user.title} {firstName} {lastName}
+          {firstName} {lastName}
         </Typography.Title>
       </div>
 
       {/*
-        RTL layout: ConfigProvider flips Descriptions so labels sit on the right.
-        Individual values that must stay LTR carry dir="ltr" or unicode-bidi overrides.
-        Editable inputs are always dir="ltr" so Hebrew/Latin mixing in the text field
-        does not confuse the cursor.
+        RTL card: dir="rtl" reverses flex order so label (first child) lands on the right.
+        Each Field's value cell carries dir="ltr" to keep data reading left-to-right.
+        Name inputs get dir set dynamically: if user types Hebrew → rtl cursor, Latin → ltr.
+        Validation rules: no numbers, no mixing Hebrew and Latin in the same field.
       */}
-      <ConfigProvider direction="rtl">
-        <Descriptions
-          bordered
-          column={1}
-          labelStyle={{ fontWeight: 600, width: 130 }}
-          contentStyle={{ direction: 'ltr', textAlign: 'left' }}
+      <div
+        dir="rtl"
+        style={{
+          background: '#fff',
+          border: '1px solid #f0f0f0',
+          borderRadius: 8,
+          overflow: 'hidden',
+          marginBottom: 24,
+        }}
+      >
+        <Field label="מגדר">{user.gender}</Field>
+
+        {/* Name field: custom layout to host per-input validation messages */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+            padding: '14px 20px',
+            borderBottom: '1px solid #f0f0f0',
+          }}
         >
-          <Descriptions.Item label="מגדר">
-            <span dir="ltr">{user.gender}</span>
-          </Descriptions.Item>
-
-          <Descriptions.Item label="שם">
-            {/* Inputs remain LTR: cursor behaves correctly for Latin names */}
-            <Space dir="ltr">
-              <Input
-                dir="ltr"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="First"
-                style={{ width: 130 }}
-              />
-              <Input
-                dir="ltr"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Last"
-                style={{ width: 130 }}
-              />
+          <div
+            style={{ minWidth: 140, fontWeight: 600, fontSize: 14, flexShrink: 0, paddingTop: 2 }}
+          >
+            שם
+          </div>
+          <div dir="ltr" style={{ flex: 1, textAlign: 'left' }}>
+            <Space align="start">
+              <div>
+                <Input
+                  dir={getInputDir(firstName)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  style={{ width: 150 }}
+                  status={firstNameError ? 'error' : undefined}
+                />
+                {firstNameError && (
+                  <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 2 }}>
+                    {firstNameError}
+                  </div>
+                )}
+              </div>
+              <div>
+                <Input
+                  dir={getInputDir(lastName)}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  style={{ width: 150 }}
+                  status={lastNameError ? 'error' : undefined}
+                />
+                {lastNameError && (
+                  <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 2 }}>
+                    {lastNameError}
+                  </div>
+                )}
+              </div>
             </Space>
-          </Descriptions.Item>
+          </div>
+        </div>
 
-          <Descriptions.Item label="גיל ושנת לידה">
-            <span dir="ltr">{user.age} ({birthYear})</span>
-          </Descriptions.Item>
-
-          <Descriptions.Item label="כתובת">
-            <span dir="ltr">
-              {user.streetNumber} {user.streetName}, {user.city}, {user.state}
-            </span>
-          </Descriptions.Item>
-
-          <Descriptions.Item label="אימייל">
-            <span dir="ltr">{user.email}</span>
-          </Descriptions.Item>
-
-          <Descriptions.Item label="טלפון">
-            <span dir="ltr">{user.phone}</span>
-          </Descriptions.Item>
-        </Descriptions>
-      </ConfigProvider>
+        <Field label="גיל ושנת לידה">
+          {user.age} ({birthYear})
+        </Field>
+        <Field label="כתובת">
+          {user.streetNumber} {user.streetName}, {user.city}, {user.state}
+        </Field>
+        <Field label="אימייל">{user.email}</Field>
+        <Field label="טלפון" last>{user.phone}</Field>
+      </div>
     </div>
   )
 }

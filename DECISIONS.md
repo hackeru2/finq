@@ -8,15 +8,25 @@ I chose Ant Design because I know it, it is a proven production-grade library (7
 
 ---
 
-## 1. Zustand over Redux or Context
+## 1. Zustand over Context (built-in) or Redux
 
-I chose Zustand for shared client state (random users list, saved users list, loading/error flags).
+React's Context API ships with React — zero install, zero extra dependency. So why not use it?
 
-**Why not Redux:** For 4 endpoints and 2 lists, the Redux setup (slices, reducers, selectors, Provider) would add boilerplate that far exceeds its benefit at this scale. Redux shines when many independent components need to subscribe to fine-grained slices; here every subscriber wants the whole list.
+Context is a *notification mechanism*, not a state-management solution. When any value in a Context changes, React re-renders **every component that consumes that context**, regardless of which slice of the value it actually uses. For a context object holding `{ randomUsers, savedUsers, loadingRandom, loadingSaved, … }`, every list row would re-render whenever the loading flag flips — even though the row only cares about its own user object.
 
-**Why not Context:** Context triggers a re-render in every consumer on every update unless you carefully split contexts and memoize. Zustand uses a selector-based subscription model, so a component that only reads `savedUsers` won't re-render when `loadingRandom` changes. That's the right default for a list-heavy app.
+To use Context correctly at this scale you would need to:
+- Split into multiple contexts (one per concern: users, loading, errors)
+- Wrap every setter in `useCallback` so consumers don't re-render on parent re-render
+- Memoize derived values with `useMemo`
+- Write a custom `useContextSelector` hook (not in React core) or accept the over-rendering
 
-**Tradeoff:** Zustand has no devtools story as rich as Redux. In a production app with complex async flows I'd reach for TanStack Query for server state and keep Zustand only for UI state.
+That is approximately 80% of what Zustand gives you, written from scratch, with more boilerplate and more ways to get it wrong. Context is the right tool for low-frequency values like theme or locale that rarely change. It is the wrong tool for list data that changes on every fetch.
+
+**Why not Redux:** For 4 endpoints and 2 lists, Redux's setup (slices, reducers, selectors, middleware, Provider) costs more in ceremony than it returns in structure.
+
+**Why Zustand:** Selector-based subscriptions out of the box — `useStore(s => s.savedUsers)` only re-renders when `savedUsers` changes. Async actions are plain `async` functions in the store. 1 kB gzipped, no Provider wrapping required.
+
+**Tradeoff:** Zustand's devtools are less mature than Redux DevTools. In a production app with complex async flows I would use TanStack Query for server state and keep Zustand only for UI-only state (filters, modals, etc.).
 
 ---
 
