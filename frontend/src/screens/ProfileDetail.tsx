@@ -36,10 +36,9 @@ function Field({
       >
         {label}
       </Typography.Text>
-      {/* dir=ltr keeps every data value reading left-to-right inside the RTL card */}
-      <div dir="ltr" style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#595959' }}>
+      <Flex style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#595959', direction: 'ltr' }}>
         {children}
-      </div>
+      </Flex>
     </Flex>
   )
 }
@@ -159,9 +158,9 @@ export default function ProfileDetail() {
       >
         <Field label="מדינה">
           <Tooltip title={user.country}>
-            <span style={{ fontSize: 24, lineHeight: 1, cursor: 'default' }}>
+            <Typography.Text style={{ fontSize: 24, lineHeight: 1, cursor: 'default' }}>
               {countryFlag(user.country)}
-            </span>
+            </Typography.Text>
           </Tooltip>
         </Field>
         <Field label="מגדר">
@@ -193,7 +192,7 @@ export default function ProfileDetail() {
             minWidth:120 is the wrap threshold; flex:1 + width:100% makes
             each input stretch to fill its share of available space.
           */}
-          <Flex dir="ltr" vertical gap={4} style={{ flex: 1, minWidth: 0 }}>
+          <Flex vertical gap={4} style={{ flex: 1, minWidth: 0, direction: 'ltr' }}>
             <Flex gap={8} wrap="wrap">
               <Flex vertical style={{ flex: 1, minWidth: 120 }}>
                 <Input

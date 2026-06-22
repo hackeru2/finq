@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, List, Space, Alert, Typography } from 'antd'
+import { Button, Flex, List, Space, Alert, Typography } from 'antd'
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import UserRow from '../components/UserRow'
@@ -31,7 +31,7 @@ export default function RandomList() {
   })
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px' }}>
+    <Flex vertical style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px' }}>
       <Space style={{ marginBottom: 20, width: '100%', justifyContent: 'space-between' }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>Back</Button>
@@ -62,6 +62,6 @@ export default function RandomList() {
           )}
         />
       )}
-    </div>
+    </Flex>
   )
 }
