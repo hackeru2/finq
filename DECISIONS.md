@@ -79,6 +79,14 @@ Profile fields like email can be longer than the card width. Instead of letting 
 
 ---
 
+## Country flag instead of country name text
+
+Country is displayed as a flag emoji, not as text. Hovering shows the full country name via Ant Design `<Tooltip>`. Flag emojis are generated from ISO 3166-1 alpha-2 codes using Unicode regional indicator characters (no image assets, no external library). The `countryFlag()` utility maps the country name strings returned by randomuser.me to ISO codes, covering every nationality in our `&nat=` filter list.
+
+**Rule:** Never render a raw country name string in the UI. Always use `countryFlag(user.country)` wrapped in `<Tooltip title={user.country}>`.
+
+---
+
 ## Nationality filter on randomuser.me
 
 The app validates that names are Hebrew or English only. The `randomuser.me` API without a `nat=` parameter can return users from Iran (IR), whose names use Farsi/Arabic script, Serbia (RS) and Ukraine (UA) with Cyrillic, and India (IN) with Devanagari. These names would fail validation and confuse the user.

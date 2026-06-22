@@ -1,6 +1,7 @@
-import { List, Avatar, Space, Tag } from 'antd'
+import { List, Avatar, Space, Tooltip, Typography } from 'antd'
 import { ManOutlined, WomanOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
 import { AppUser } from '../types'
+import { countryFlag } from '../utils/countryFlag'
 
 interface Props {
   user: AppUser
@@ -24,14 +25,22 @@ export default function UserRow({ user, onClick }: Props) {
         title={
           <Space size={8}>
             <GenderIcon gender={user.gender} />
-            <span style={{ fontWeight: 600 }}>{user.firstName} {user.lastName}</span>
+            <Typography.Text strong>{user.firstName} {user.lastName}</Typography.Text>
           </Space>
         }
         description={
           <Space wrap size={[8, 4]}>
-            <Tag>{user.country}</Tag>
-            <span><PhoneOutlined style={{ marginRight: 4 }} />{user.phone}</span>
-            <span><MailOutlined style={{ marginRight: 4 }} />{user.email}</span>
+            <Tooltip title={user.country}>
+              <span style={{ fontSize: 20, lineHeight: 1, cursor: 'default' }}>
+                {countryFlag(user.country)}
+              </span>
+            </Tooltip>
+            <Typography.Text type="secondary">
+              <PhoneOutlined style={{ marginRight: 4 }} />{user.phone}
+            </Typography.Text>
+            <Typography.Text type="secondary">
+              <MailOutlined style={{ marginRight: 4 }} />{user.email}
+            </Typography.Text>
           </Space>
         }
       />
