@@ -50,6 +50,7 @@ export default function RandomList() {
             <UserRow
               key={user.id}
               user={user}
+              query={filter.text}
               onClick={() => navigate('/profile', { state: { user, source: 'random' } })}
             />
           )}

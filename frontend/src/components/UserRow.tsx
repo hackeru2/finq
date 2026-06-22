@@ -3,9 +3,16 @@ import { MailOutlined, PhoneOutlined, HistoryOutlined } from '@ant-design/icons'
 import { AppUser } from '../types'
 import { countryFlag } from '../utils/countryFlag'
 import { nameChanged } from '../utils/nameHistory'
+import { highlight } from '../utils/highlight'
 import GenderIcon from './GenderIcon'
 
-export default function UserRow({ user, onClick }: Props) {
+interface Props {
+  user: AppUser
+  onClick: () => void
+  query?: string
+}
+
+export default function UserRow({ user, onClick, query = '' }: Props) {
   const changed = nameChanged(user)
   const { token } = theme.useToken()
 
@@ -24,7 +31,9 @@ export default function UserRow({ user, onClick }: Props) {
           <Flex vertical gap={2}>
             <Space size={8}>
               <GenderIcon gender={user.gender} />
-              <Typography.Text strong>{user.title} {user.firstName} {user.lastName}</Typography.Text>
+              <Typography.Text strong>
+                {highlight(`${user.title} ${user.firstName} ${user.lastName}`, query)}
+              </Typography.Text>
             </Space>
             {changed && (
               <Typography.Text type="secondary" style={{ fontSize: 11 }}>
