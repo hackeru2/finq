@@ -2,7 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
 
-const gitSha = execSync('git rev-parse --short HEAD').toString().trim()
+let gitSha = 'dev'
+try {
+  gitSha = execSync('git rev-parse --short HEAD').toString().trim()
+} catch {
+  // git not available (e.g. inside Docker without git installed)
+}
 
 export default defineConfig({
   define: {
