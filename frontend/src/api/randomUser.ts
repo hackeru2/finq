@@ -16,8 +16,13 @@ interface RUResult {
   dob: { date: string; age: number }
 }
 
+// Restrict to Latin-script nationalities so names contain only letters the
+// app can validate (Hebrew or English). Excluded: IR (Farsi/Arabic script),
+// RS/UA (Cyrillic), IN (Devanagari/Tamil/…).
+const NAT = 'au,br,ca,ch,de,dk,es,fi,fr,gb,ie,mx,nl,no,nz,us'
+
 export async function fetchRandomUsers(count: number): Promise<AppUser[]> {
-  const res = await fetch(`https://randomuser.me/api/?results=${count}`)
+  const res = await fetch(`https://randomuser.me/api/?results=${count}&nat=${NAT}`)
   if (!res.ok) throw new Error('Failed to fetch random users')
   const data: { results: RUResult[] } = await res.json()
   return data.results.map((r) => ({

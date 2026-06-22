@@ -80,7 +80,12 @@ export default function ProfileDetail() {
     }
   }
 
-  const handleSave   = () => withBusy(async () => { await saveUser({ ...user, firstName, lastName }); setFeedback({ type: 'success', msg: 'Saved!' }) })
+  const handleSave   = () => withBusy(async () => {
+    await saveUser({ ...user, firstName, lastName })
+    // Keep the random list in sync so pressing Back shows the edited names
+    updateRandom(user.id, firstName, lastName)
+    setFeedback({ type: 'success', msg: 'Saved!' })
+  })
   const handleDelete = () => withBusy(async () => { await deleteUser(user.id); navigate('/history', { replace: true }) })
   const handleUpdate = () => withBusy(async () => {
     if (source === 'saved') await updateSaved(user.id, firstName, lastName)
@@ -217,7 +222,12 @@ export default function ProfileDetail() {
 
         <Field label="גיל ושנת לידה">{user.age} ({birthYear})</Field>
         <Field label="כתובת">{user.streetNumber} {user.streetName}, {user.city}, {user.state}</Field>
-        <Field label="אימייל">{user.email}</Field>
+        <Field label="אימייל">
+          {/* ellipsis clips long addresses; tooltip shows the full email on hover */}
+          <Typography.Text ellipsis={{ tooltip: user.email }} style={{ display: 'block' }}>
+            {user.email}
+          </Typography.Text>
+        </Field>
         <Field label="טלפון" last>{user.phone}</Field>
       </Flex>
     </Flex>

@@ -71,6 +71,22 @@ Buttons and the action bar live in a separate `<Flex>` outside the RTL card and 
 
 ---
 
+## Long text in profile fields: ellipsis + hover tooltip
+
+Profile fields like email can be longer than the card width. Instead of letting them overflow or hard-wrapping (which breaks layout), long values are clipped with `…` and the full value is shown on hover via Ant Design's `Typography.Text ellipsis={{ tooltip: value }}`. This requires the value to be inside a `display: block` span so the browser has a width boundary to truncate against.
+
+**Rule:** Any single-line data value that can be arbitrarily long (email, URL, ID) must be wrapped in `<Typography.Text ellipsis={{ tooltip: value }}>`. Multi-line values (address, description) use CSS `wordBreak: 'break-word'` instead.
+
+---
+
+## Nationality filter on randomuser.me
+
+The app validates that names are Hebrew or English only. The `randomuser.me` API without a `nat=` parameter can return users from Iran (IR), whose names use Farsi/Arabic script, Serbia (RS) and Ukraine (UA) with Cyrillic, and India (IN) with Devanagari. These names would fail validation and confuse the user.
+
+**Fix:** The API call includes `&nat=au,br,ca,ch,de,dk,es,fi,fr,gb,ie,mx,nl,no,nz,us` — only Latin-script nationalities. This is a deliberate constraint, not an accidental omission: we want the fetched data to be consistent with what the validation rules allow to be saved.
+
+---
+
 ## Filter design: gender toggle + age range slider, not just text
 
 Beyond the required name/country text search, I added two additional filters: a gender toggle (All / Male / Female) and an age range slider. All three live in a single `FilterBar` component.
