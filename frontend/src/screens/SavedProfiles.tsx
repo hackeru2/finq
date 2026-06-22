@@ -5,10 +5,8 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useStore } from '../store/useStore'
 import UserRow from '../components/UserRow'
 import SkeletonList from '../components/SkeletonList'
-import FilterBar, { FilterState } from '../components/FilterBar'
+import FilterBar, { FilterState, DEFAULT_FILTER } from '../components/FilterBar'
 import { useDebounce } from '../hooks/useDebounce'
-
-const DEFAULT_FILTER: FilterState = { text: '', gender: 'all', ageRange: [0, 100] }
 
 export default function SavedProfiles() {
   const navigate = useNavigate()
@@ -20,12 +18,15 @@ export default function SavedProfiles() {
     fetchSaved()
   }, [])
 
+  const countries = [...new Set(savedUsers.map((u) => u.country))].sort()
+
   const filtered = savedUsers.filter((u) => {
     const q = filter.text.toLowerCase()
     return (
-      (`${u.firstName} ${u.lastName}`.toLowerCase().includes(q) || u.country.toLowerCase().includes(q)) &&
+      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) &&
       (filter.gender === 'all' || u.gender === filter.gender) &&
-      u.age >= filter.ageRange[0] && u.age <= filter.ageRange[1]
+      u.age >= filter.ageRange[0] && u.age <= filter.ageRange[1] &&
+      (filter.country === '' || u.country === filter.country)
     )
   })
 
@@ -36,7 +37,7 @@ export default function SavedProfiles() {
         <Typography.Title level={3} style={{ margin: 0 }}>Saved Profiles</Typography.Title>
       </Space>
 
-      <FilterBar value={rawFilter} onChange={setRawFilter} />
+      <FilterBar value={rawFilter} onChange={setRawFilter} countries={countries} />
 
       {errorSaved && <Alert type="error" message={errorSaved} style={{ marginBottom: 16 }} />}
 

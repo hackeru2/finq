@@ -60,7 +60,24 @@ I chose MySQL 8 running in Docker because the spec said "be ready to defend your
 
 ---
 
-## 3. Single debounced filter input at 200ms
+## 3. Filter modal behind a button, not an always-visible filter bar
+
+Gender, age range, and country filters live inside a modal that opens from a "Filters" button. The text search stays visible inline at all times.
+
+**Why a modal rather than always-visible controls:**
+An always-visible filter bar takes up permanent vertical space above the list, pushing content down even when the user has no intention of filtering. The majority of list views are browsed without filtering — the controls are noise for most interactions. Hiding them behind a button gives the list more room and reduces visual clutter by default.
+
+**Active-state button:** When any modal filter is set, the button switches to `type="primary"` (filled blue) and a red badge shows the count of active filters. The user always knows at a glance whether the list is filtered without having to inspect the controls. This is the same pattern used by Airbnb, Booking.com, and most mobile-first filter UIs.
+
+**Why text search stays outside the modal:** Text search is the fastest, most common filter action — typing a name to jump to a result. Putting it inside a modal would add two extra clicks (open → type → close) to the most frequent interaction. The modal is for precision filters that require deliberate configuration.
+
+**Draft-then-apply:** Changes inside the modal are not applied to the list until the user clicks Apply. This prevents the list from re-filtering on every slider drag or radio click while the modal is open. Cancel discards the draft; Reset All clears all modal filters immediately.
+
+**Country filter (new):** A searchable Select populated dynamically from the countries present in the current user list. It is exact-match (not substring), so it complements rather than duplicates the text search which already handles name filtering.
+
+---
+
+## 3a. Single debounced filter input at 200ms
 
 Instead of two separate inputs (name / country), I used one `<Input>` that searches across both fields, debounced at 200ms.
 
