@@ -51,8 +51,6 @@ The name `<Input>` fields get a dynamic `dir` from `getInputDir()`: if the user 
 
 ## Extension: filter modal with active-state button
 
-Beyond the required name filter I added gender (All / Male / Female radio), age range (slider, 0–100), and country (multi-select) filters. All three live inside a modal behind a "Filters" button rather than an always-visible bar — a filter bar eats permanent vertical space even when the user isn't filtering, which is most of the time.
+Added gender, age range (slider), and country (multi-select) filters behind a modal button. Filters stay hidden until needed — a persistent bar wastes vertical space. When active, the button turns blue with a badge count. Text search stays inline since it's the most frequent action. Draft-then-apply prevents re-filtering on every slider drag.
 
-When any modal filter is active the button switches to `type="primary"` (filled blue) and shows a red badge with the count of active filters. The user always knows at a glance whether the list is filtered without inspecting the controls. The text search stays inline outside the modal because it's the most frequent action — putting it inside would cost two extra clicks every time.
-
-**What I'd do next:** Add a saved-search feature — let users name and store a filter combination. Add a URL-based filter state (`?gender=female&country=France`) so filtered views are shareable and survive a page refresh.
+**With more time:** Connect a vision AI agent (Claude API, server-side) to analyse each profile photo and return an age/gender match score — shown as a ✓ or ⚠ badge on the avatar. Real identity products can't trust user-supplied data blindly; this turns a static photo into a data-quality signal.
