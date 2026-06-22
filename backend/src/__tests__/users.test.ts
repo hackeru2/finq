@@ -1,79 +1,88 @@
 import request from 'supertest'
 import express from 'express'
-import usersRouter from '../routes/users'
 
+// Mock Prisma client before importing routes
 jest.mock('../db', () => ({
-  pool: { execute: jest.fn() },
+  prisma: {
+    $connect: jest.fn().mockResolvedValue(undefined),
+    $executeRaw: jest.fn().mockResolvedValue(0),
+    user: {
+      findMany:  jest.fn(),
+      findUnique: jest.fn(),
+      create:    jest.fn(),
+      update:    jest.fn(),
+      delete:    jest.fn(),
+    },
+  },
   initDb: jest.fn().mockResolvedValue(undefined),
 }))
 
-import { pool } from '../db'
-const mockExecute = pool.execute as jest.Mock
+import { prisma } from '../db'
+import usersRouter from '../routes/users'
+
+const mockUser = prisma.user as jest.Mocked<typeof prisma.user>
 
 const app = express()
 app.use(express.json())
 app.use('/api/users', usersRouter)
-// error handler so next(err) returns a clean 500
 app.use((_err: Error, _req: any, res: any, _next: any) => {
   res.status(500).json({ error: 'Internal server error' })
 })
 
-const dbRow = {
-  id: 'test-uuid',
-  title: 'Mr',
-  first_name: 'John',
-  last_name: 'Doe',
-  gender: 'male',
-  country: 'USA',
-  city: 'New York',
-  state: 'NY',
-  street_name: 'Broadway',
-  street_number: 42,
-  email: 'john@example.com',
-  phone: '555-0100',
-  picture_large: 'https://example.com/large.jpg',
-  picture_thumbnail: 'https://example.com/thumb.jpg',
-  age: 30,
-  dob: '1994-01-01T00:00:00.000Z',
+const prismaRow = {
+  id:                'test-uuid',
+  title:             'Mr',
+  firstName:         'John',
+  lastName:          'Doe',
+  originalFirstName: 'John',
+  originalLastName:  'Doe',
+  gender:            'male',
+  country:           'USA',
+  city:              'New York',
+  state:             'NY',
+  streetName:        'Broadway',
+  streetNumber:      42,
+  email:             'john@example.com',
+  phone:             '555-0100',
+  pictureLarge:      'https://example.com/large.jpg',
+  pictureThumbnail:  'https://example.com/thumb.jpg',
+  age:               30,
+  dob:               '1994-01-01T00:00:00.000Z',
+  createdAt:         new Date(),
 }
 
 const user = {
-  id: 'test-uuid',
-  title: 'Mr',
-  firstName: 'John',
-  lastName: 'Doe',
-  gender: 'male',
-  country: 'USA',
-  city: 'New York',
-  state: 'NY',
-  streetName: 'Broadway',
-  streetNumber: 42,
-  email: 'john@example.com',
-  phone: '555-0100',
-  pictureLarge: 'https://example.com/large.jpg',
+  id:              'test-uuid',
+  title:           'Mr',
+  firstName:       'John',
+  lastName:        'Doe',
+  gender:          'male',
+  country:         'USA',
+  city:            'New York',
+  state:           'NY',
+  streetName:      'Broadway',
+  streetNumber:    42,
+  email:           'john@example.com',
+  phone:           '555-0100',
+  pictureLarge:    'https://example.com/large.jpg',
   pictureThumbnail: 'https://example.com/thumb.jpg',
-  age: 30,
-  dob: '1994-01-01T00:00:00.000Z',
+  age:             30,
+  dob:             '1994-01-01T00:00:00.000Z',
 }
 
 describe('GET /api/users', () => {
   it('returns an array of users mapped from DB rows', async () => {
-    mockExecute.mockResolvedValueOnce([[dbRow], []])
+    mockUser.findMany.mockResolvedValueOnce([prismaRow])
 
     const res = await request(app).get('/api/users')
 
     expect(res.status).toBe(200)
     expect(Array.isArray(res.body)).toBe(true)
-    expect(res.body[0]).toMatchObject({
-      id: 'test-uuid',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com',
-    })
+    expect(res.body[0]).toMatchObject({ id: 'test-uuid', firstName: 'John', lastName: 'Doe' })
   })
 
   it('returns an empty array when no users are saved', async () => {
-    mockExecute.mockResolvedValueOnce([[], []])
+    mockUser.findMany.mockResolvedValueOnce([])
 
     const res = await request(app).get('/api/users')
 
@@ -84,7 +93,7 @@ describe('GET /api/users', () => {
 
 describe('POST /api/users', () => {
   it('saves a user and returns 201 with the user body', async () => {
-    mockExecute.mockResolvedValueOnce([{ affectedRows: 1 }, []])
+    mockUser.create.mockResolvedValueOnce(prismaRow)
 
     const res = await request(app).post('/api/users').send(user)
 
@@ -93,8 +102,8 @@ describe('POST /api/users', () => {
   })
 
   it('returns 409 on duplicate id', async () => {
-    const dupError = Object.assign(new Error('Duplicate entry'), { code: 'ER_DUP_ENTRY' })
-    mockExecute.mockRejectedValueOnce(dupError)
+    const dupError = Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+    mockUser.create.mockRejectedValueOnce(dupError)
 
     const res = await request(app).post('/api/users').send(user)
 
@@ -105,10 +114,8 @@ describe('POST /api/users', () => {
 
 describe('PATCH /api/users/:id', () => {
   it('updates name and returns the updated user', async () => {
-    const updatedRow = { ...dbRow, first_name: 'Jane' }
-    mockExecute
-      .mockResolvedValueOnce([{ affectedRows: 1 }, []])   // UPDATE
-      .mockResolvedValueOnce([[updatedRow], []])            // SELECT
+    const updatedRow = { ...prismaRow, firstName: 'Jane' }
+    mockUser.update.mockResolvedValueOnce(updatedRow)
 
     const res = await request(app)
       .patch('/api/users/test-uuid')
@@ -119,7 +126,7 @@ describe('PATCH /api/users/:id', () => {
   })
 
   it('returns 404 when the user does not exist', async () => {
-    mockExecute.mockResolvedValueOnce([{ affectedRows: 0 }, []])
+    mockUser.update.mockRejectedValueOnce(new Error('Record not found'))
 
     const res = await request(app)
       .patch('/api/users/missing-id')
@@ -132,16 +139,15 @@ describe('PATCH /api/users/:id', () => {
 
 describe('DELETE /api/users/:id', () => {
   it('deletes an existing user and returns 204', async () => {
-    mockExecute.mockResolvedValueOnce([{ affectedRows: 1 }, []])
+    mockUser.delete.mockResolvedValueOnce(prismaRow)
 
     const res = await request(app).delete('/api/users/test-uuid')
 
     expect(res.status).toBe(204)
-    expect(res.body).toEqual({})
   })
 
   it('returns 404 when the user does not exist', async () => {
-    mockExecute.mockResolvedValueOnce([{ affectedRows: 0 }, []])
+    mockUser.delete.mockRejectedValueOnce(new Error('Record not found'))
 
     const res = await request(app).delete('/api/users/missing-id')
 

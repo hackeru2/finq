@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
-import { initDb } from './db'
+import { prisma, initDb } from './db'
 import usersRouter from './routes/users'
 
 const app = express()
@@ -21,6 +21,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 async function startWithRetry(retries = 10, delayMs = 3000): Promise<void> {
   for (let i = 1; i <= retries; i++) {
     try {
+      await prisma.$connect()
       await initDb()
       app.listen(PORT, () => console.log(`Backend running on port ${PORT}`))
       return

@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @db.VarChar(36)
+  title             String   @db.VarChar(20)
+  firstName         String   @map("first_name") @db.VarChar(100)
+  lastName          String   @map("last_name") @db.VarChar(100)
+  originalFirstName String   @default("") @map("original_first_name") @db.VarChar(100)
+  originalLastName  String   @default("") @map("original_last_name") @db.VarChar(100)
+  gender            String   @db.VarChar(20)
+  country           String   @db.VarChar(100)
+  city              String   @db.VarChar(100)
+  state             String   @db.VarChar(100)
+  streetName        String   @map("street_name") @db.VarChar(200)
+  streetNumber      Int      @map("street_number")
+  email             String   @db.VarChar(200)
+  phone             String   @db.VarChar(50)
+  pictureLarge      String   @map("picture_large") @db.Text
+  pictureThumbnail  String   @map("picture_thumbnail") @db.Text
+  age               Int
+  dob               String   @db.VarChar(30)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}

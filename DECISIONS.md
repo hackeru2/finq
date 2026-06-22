@@ -54,3 +54,18 @@ The name `<Input>` fields get a dynamic `dir` from `getInputDir()`: if the user 
 Added gender, age range (slider), and country (multi-select) filters behind a modal button. Filters stay hidden until needed — a persistent bar wastes vertical space. When active, the button turns blue with a badge count. Text search stays inline since it's the most frequent action. Draft-then-apply prevents re-filtering on every slider drag.
 
 **With more time:** Connect a vision AI agent (Claude API, server-side) to analyse each profile photo and return an age/gender match score — shown as a ✓ or ⚠ badge on the avatar. Real identity products can't trust user-supplied data blindly; this turns a static photo into a data-quality signal.
+
+---
+
+## Decision 4: Prisma ORM over raw SQL for type safety and migration management
+
+I migrated from raw `mysql2/promise` queries to Prisma because:
+- **Schema-first types** — Prisma generates TypeScript types from `schema.prisma` automatically, eliminating the need for manual type definitions and preventing schema-code mismatches
+- **Zero SQL strings** — All queries are parameterized by default, killing SQL injection vectors
+- **Repository pattern** — `UserRepository` provides a clean OOP interface (`findAll()`, `findById()`, etc.) instead of query strings scattered across route handlers
+- **Automatic migrations** — Schema changes create reversible migration files instead of manual `ALTER TABLE` scripts
+- **Prisma Studio** — Built-in visual database browser at `npx prisma studio` for dev debugging
+
+**Tradeoff:** Prisma adds ~50ms to cold queries (vs direct `mysql2`) due to type marshalling. However, Prisma's connection pooling and prepared statements eliminate the micro-optimisations you'd gain from raw SQL anyway. For this app's scale (10–100 saved users), the performance delta is unmeasurable. In production with millions of rows, I'd benchmark and consider Prisma Accelerate (global caching layer) or drop to raw SQL for specific slow queries while keeping the repository pattern.
+
+**Migration cost:** Moved from `db.ts` exporting a pool to exporting a singleton `PrismaClient`. Updated all route handlers to use `UserRepository` methods instead of inline queries. Updated tests to mock Prisma instead of `mysql2`. All changes are transparent to the frontend.

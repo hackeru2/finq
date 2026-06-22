@@ -1,39 +1,14 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import { RowDataPacket } from 'mysql2'
-import { pool } from '../db'
+import { prisma } from '../db'
+import { UserRepository } from '../repositories/UserRepository'
 import { AppUser } from '../types'
 
 const router = Router()
-
-function rowToUser(row: RowDataPacket): AppUser {
-  return {
-    id: row.id,
-    title: row.title,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    originalFirstName: row.original_first_name,
-    originalLastName: row.original_last_name,
-    gender: row.gender,
-    country: row.country,
-    city: row.city,
-    state: row.state,
-    streetName: row.street_name,
-    streetNumber: row.street_number,
-    email: row.email,
-    phone: row.phone,
-    pictureLarge: row.picture_large,
-    pictureThumbnail: row.picture_thumbnail,
-    age: row.age,
-    dob: row.dob,
-  }
-}
+const repo = new UserRepository(prisma)
 
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const [rows] = await pool.execute<RowDataPacket[]>(
-      'SELECT * FROM users ORDER BY created_at DESC'
-    )
-    res.json(rows.map(rowToUser))
+    res.json(await repo.findAll())
   } catch (err) {
     next(err)
   }
@@ -42,22 +17,10 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   const user: AppUser = req.body
   try {
-    await pool.execute(
-      `INSERT INTO users
-        (id, title, first_name, last_name, original_first_name, original_last_name,
-         gender, country, city, state, street_name, street_number,
-         email, phone, picture_large, picture_thumbnail, age, dob)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        user.id, user.title, user.firstName, user.lastName,
-        user.firstName, user.lastName,          // originals are frozen at save time
-        user.gender, user.country, user.city, user.state, user.streetName, user.streetNumber,
-        user.email, user.phone, user.pictureLarge, user.pictureThumbnail, user.age, user.dob,
-      ]
-    )
-    res.status(201).json(user)
+    const created = await repo.create(user)
+    res.status(201).json(created)
   } catch (err: any) {
-    if (err.code === 'ER_DUP_ENTRY') {
+    if (err.code === 'P2002') {  // Prisma unique constraint violation
       return res.status(409).json({ error: 'User already saved' })
     }
     next(err)
@@ -68,15 +31,9 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
   const { id } = req.params
   const { firstName, lastName } = req.body as { firstName: string; lastName: string }
   try {
-    const [result] = await pool.execute<any>(
-      'UPDATE users SET first_name = ?, last_name = ? WHERE id = ?',
-      [firstName, lastName, id]
-    )
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-    const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM users WHERE id = ?', [id])
-    res.json(rowToUser(rows[0]))
+    const updated = await repo.update(id, firstName, lastName)
+    if (!updated) return res.status(404).json({ error: 'User not found' })
+    res.json(updated)
   } catch (err) {
     next(err)
   }
@@ -85,10 +42,8 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params
   try {
-    const [result] = await pool.execute<any>('DELETE FROM users WHERE id = ?', [id])
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'User not found' })
-    }
+    const deleted = await repo.delete(id)
+    if (!deleted) return res.status(404).json({ error: 'User not found' })
     res.status(204).send()
   } catch (err) {
     next(err)

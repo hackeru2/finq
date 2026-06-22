@@ -9,7 +9,7 @@ React + Node/TypeScript app that fetches random user profiles and lets you persi
 | Layer | Technology |
 |---|---|
 | Frontend | React 18, TypeScript, Vite, Ant Design 5, Zustand, React Router 6 |
-| Backend | Node 20, TypeScript, Express, mysql2 |
+| Backend | Node 20, TypeScript, Express, Prisma ORM |
 | Database | MySQL 8 |
 | DB Admin | phpMyAdmin |
 | Runtime | Docker + docker-compose |
@@ -36,13 +36,10 @@ MySQL takes ~30 seconds to initialise on first boot; the backend waits for its h
 
 ## Environment variables
 
-All defaults are set in `docker-compose.yml`. For local development without Docker, copy the relevant block:
+All defaults are set in `docker-compose.yml`. For local development without Docker:
 
 ```
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=finq
+DATABASE_URL="mysql://root:root@localhost:3306/finq"
 ```
 
 ## Project structure
@@ -50,10 +47,14 @@ DB_NAME=finq
 ```
 finq/
 ├── backend/          Node + TypeScript API
+│   ├── prisma/
+│   │   └── schema.prisma   Prisma ORM schema
 │   └── src/
 │       ├── index.ts        entry point
-│       ├── db.ts           MySQL pool + schema init
+│       ├── db.ts           Prisma singleton
 │       ├── types.ts        shared AppUser type
+│       ├── repositories/   Data access layer
+│       │   └── UserRepository.ts
 │       └── routes/users.ts CRUD endpoints
 ├── frontend/         React + Vite app
 │   └── src/

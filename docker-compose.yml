@@ -42,6 +42,7 @@ services:
       DB_USER: root
       DB_PASSWORD: root
       DB_NAME: finq
+      DATABASE_URL: mysql://root:root@db:3306/finq
     volumes:
       - ./backend:/app
       - /app/node_modules
