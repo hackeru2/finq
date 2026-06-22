@@ -80,6 +80,32 @@ Buttons and the action bar live in a separate `<Flex>` outside the RTL card and 
 
 ---
 
+## Name-change history in Saved Profiles
+
+When a saved profile's name is edited, the original name is preserved and shown in the list as a small muted line directly under the current name:
+
+```
+♂  Jane Smith
+   🕐 was John Smith
+```
+
+**Why this is the right UX decision:**
+
+Editing a name is a lightweight action — one click, two fields, one button. There is no confirmation dialog, no audit log visible anywhere else, and no undo. Without the history label, a user who comes back to the list a week later has no way to know whether "Jane Smith" was always named that, or was previously someone else. This matters in a contact-management context: names are identity. Silently overwriting them without a trace destroys context.
+
+Showing the original name also catches accidental edits. If a user fat-fingers a name and saves it, the "was …" label makes the mistake immediately visible the next time they see the list — without requiring a separate history screen, an undo stack, or any extra navigation.
+
+The label is intentionally subtle (11 px, `type="secondary"`). Users who don't need it don't see it as noise; users who do need it can't miss it.
+
+**Why store it in the DB rather than in the client:**
+Client-side state is lost on refresh. The original name must survive across sessions, browser restarts, and multiple devices — so it belongs in the database, not in Zustand or localStorage.
+
+**Implementation:** Two DB columns `original_first_name` / `original_last_name` are set at INSERT time equal to the initial name and never updated by PATCH. A startup backfill seeds them for rows predating this feature.
+
+**Rule:** `PATCH /users/:id` must never touch `original_first_name` or `original_last_name`. The `nameChanged()` utility in `frontend/src/utils/nameHistory.ts` is the single source of truth for the comparison — never inline it.
+
+---
+
 ## Corners cut
 
 - **No auth / RBAC** — spec says not required.

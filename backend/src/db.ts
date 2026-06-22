@@ -34,12 +34,20 @@ export async function initDb(): Promise<void> {
     )
   `)
 
-  // Add columns to pre-existing tables that were created before this migration.
-  // MySQL raises 1060 (ER_DUP_FIELDNAME) if the column already exists — that is fine.
+  // Add columns to pre-existing tables (MySQL raises 1060 if column already exists — ignore).
   for (const col of [
     "ALTER TABLE users ADD COLUMN original_first_name VARCHAR(100) NOT NULL DEFAULT ''",
     "ALTER TABLE users ADD COLUMN original_last_name  VARCHAR(100) NOT NULL DEFAULT ''",
   ]) {
     try { await pool.execute(col) } catch { /* column already exists */ }
   }
+
+  // Backfill: rows saved before this migration have original_*_name = ''.
+  // Seed them to the current name so future edits are trackable from today.
+  await pool.execute(`
+    UPDATE users
+    SET original_first_name = first_name,
+        original_last_name  = last_name
+    WHERE original_first_name = ''
+  `)
 }

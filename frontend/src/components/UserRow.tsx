@@ -2,6 +2,7 @@ import { List, Avatar, Space, Tooltip, Typography, Flex } from 'antd'
 import { ManOutlined, WomanOutlined, MailOutlined, PhoneOutlined, HistoryOutlined } from '@ant-design/icons'
 import { AppUser } from '../types'
 import { countryFlag } from '../utils/countryFlag'
+import { nameChanged } from '../utils/nameHistory'
 
 interface Props {
   user: AppUser
@@ -12,13 +13,6 @@ const GenderIcon = ({ gender }: { gender: string }) =>
   gender === 'male'
     ? <ManOutlined aria-label="male" style={{ color: '#1677ff', fontSize: 16 }} />
     : <WomanOutlined aria-label="female" style={{ color: '#eb2f96', fontSize: 16 }} />
-
-function nameChanged(user: AppUser): boolean {
-  return Boolean(
-    user.originalFirstName &&
-    (user.originalFirstName !== user.firstName || user.originalLastName !== user.lastName)
-  )
-}
 
 export default function UserRow({ user, onClick }: Props) {
   const changed = nameChanged(user)
