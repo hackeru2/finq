@@ -90,7 +90,7 @@ export default function ProfileDetail() {
   const handleDelete = () => withBusy(async () => {
     await deleteUser(user.id)
     message.success(`${user.firstName} ${user.lastName} deleted`)
-    navigate('/history', { replace: true })
+    setTimeout(() => navigate('/history', { replace: true }), 1200)
   })
   const handleUpdate = () => withBusy(async () => {
     if (source === 'saved') await updateSaved(user.id, firstName, lastName)
