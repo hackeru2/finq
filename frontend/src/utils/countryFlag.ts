@@ -1,7 +1,9 @@
 // Maps country names as returned by randomuser.me to ISO 3166-1 alpha-2 codes.
-// Only covers the nationalities we actually request (&nat= filter in randomUser.ts).
+// Covers ALL nationalities randomuser.me supports (active + legacy) so that
+// saved users from before the &nat= filter still get a real flag.
 // GB has regional variants — all map to the UK flag.
 const COUNTRY_TO_ISO: Record<string, string> = {
+  // Active &nat= filter set
   Australia: 'AU',
   Brazil: 'BR',
   Canada: 'CA',
@@ -22,6 +24,13 @@ const COUNTRY_TO_ISO: Record<string, string> = {
   Norway: 'NO',
   'New Zealand': 'NZ',
   'United States': 'US',
+  // Legacy nationalities (excluded from new fetches but may exist in saved data)
+  India: 'IN',
+  Iran: 'IR',
+  Serbia: 'RS',
+  Turkey: 'TR',
+  'Türkiye': 'TR',
+  Ukraine: 'UA',
 }
 
 function isoToFlag(code: string): string {
