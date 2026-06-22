@@ -1,31 +1,63 @@
 version: '3.9'
 
 services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: finq
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - finq-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - finq-net
+
   backend:
     build: ./backend
     ports:
       - '5000:5000'
     environment:
-      - NODE_ENV=development
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: finq
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - finq-net
 
   frontend:
     build: ./frontend
     ports:
-      - '3000:3000'
-    environment:
-      - REACT_APP_API_URL=http://localhost:5000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - '5173:5173'
     depends_on:
       - backend
     networks:
       - finq-net
+
+volumes:
+  mysql_data:
 
 networks:
   finq-net:
