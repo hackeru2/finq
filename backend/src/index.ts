@@ -18,11 +18,18 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: 'Internal server error' })
 })
 
-initDb()
-  .then(() => {
-    app.listen(PORT, () => console.log(`Backend running on port ${PORT}`))
-  })
-  .catch((err) => {
-    console.error('DB init failed:', err)
-    process.exit(1)
-  })
+async function startWithRetry(retries = 10, delayMs = 3000): Promise<void> {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await initDb()
+      app.listen(PORT, () => console.log(`Backend running on port ${PORT}`))
+      return
+    } catch (err: any) {
+      console.error(`DB init attempt ${i}/${retries} failed: ${err.message}`)
+      if (i === retries) process.exit(1)
+      await new Promise(r => setTimeout(r, delayMs))
+    }
+  }
+}
+
+startWithRetry()
