@@ -3,6 +3,8 @@ export interface AppUser {
   title: string
   firstName: string
   lastName: string
+  originalFirstName?: string
+  originalLastName?: string
   gender: string
   country: string
   city: string

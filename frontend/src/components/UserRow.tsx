@@ -1,5 +1,5 @@
-import { List, Avatar, Space, Tooltip, Typography } from 'antd'
-import { ManOutlined, WomanOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
+import { List, Avatar, Space, Tooltip, Typography, Flex } from 'antd'
+import { ManOutlined, WomanOutlined, MailOutlined, PhoneOutlined, HistoryOutlined } from '@ant-design/icons'
 import { AppUser } from '../types'
 import { countryFlag } from '../utils/countryFlag'
 
@@ -13,7 +13,16 @@ const GenderIcon = ({ gender }: { gender: string }) =>
     ? <ManOutlined aria-label="male" style={{ color: '#1677ff', fontSize: 16 }} />
     : <WomanOutlined aria-label="female" style={{ color: '#eb2f96', fontSize: 16 }} />
 
+function nameChanged(user: AppUser): boolean {
+  return Boolean(
+    user.originalFirstName &&
+    (user.originalFirstName !== user.firstName || user.originalLastName !== user.lastName)
+  )
+}
+
 export default function UserRow({ user, onClick }: Props) {
+  const changed = nameChanged(user)
+
   return (
     <List.Item
       onClick={onClick}
@@ -23,10 +32,18 @@ export default function UserRow({ user, onClick }: Props) {
       <List.Item.Meta
         avatar={<Avatar size={48} src={user.pictureThumbnail} />}
         title={
-          <Space size={8}>
-            <GenderIcon gender={user.gender} />
-            <Typography.Text strong>{user.firstName} {user.lastName}</Typography.Text>
-          </Space>
+          <Flex vertical gap={2}>
+            <Space size={8}>
+              <GenderIcon gender={user.gender} />
+              <Typography.Text strong>{user.firstName} {user.lastName}</Typography.Text>
+            </Space>
+            {changed && (
+              <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                <HistoryOutlined style={{ marginRight: 4 }} />
+                was {user.originalFirstName} {user.originalLastName}
+              </Typography.Text>
+            )}
+          </Flex>
         }
         description={
           <Space wrap size={[8, 4]}>

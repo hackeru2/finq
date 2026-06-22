@@ -11,6 +11,8 @@ function rowToUser(row: RowDataPacket): AppUser {
     title: row.title,
     firstName: row.first_name,
     lastName: row.last_name,
+    originalFirstName: row.original_first_name,
+    originalLastName: row.original_last_name,
     gender: row.gender,
     country: row.country,
     city: row.city,
@@ -42,12 +44,14 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     await pool.execute(
       `INSERT INTO users
-        (id, title, first_name, last_name, gender, country, city, state,
-         street_name, street_number, email, phone, picture_large, picture_thumbnail, age, dob)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, title, first_name, last_name, original_first_name, original_last_name,
+         gender, country, city, state, street_name, street_number,
+         email, phone, picture_large, picture_thumbnail, age, dob)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        user.id, user.title, user.firstName, user.lastName, user.gender,
-        user.country, user.city, user.state, user.streetName, user.streetNumber,
+        user.id, user.title, user.firstName, user.lastName,
+        user.firstName, user.lastName,          // originals are frozen at save time
+        user.gender, user.country, user.city, user.state, user.streetName, user.streetNumber,
         user.email, user.phone, user.pictureLarge, user.pictureThumbnail, user.age, user.dob,
       ]
     )
